@@ -5,8 +5,8 @@ services:
     ports:
       - "1883:1883" # MQTT TCP port
     volumes:
-      - ./mqtt-config:/mosquitto/config
-      - ./mqtt-data:/mosquitto/data
-      - ./mqtt-logs:/mosquitto/log
+      - ./mqtt/mqtt-config:/mosquitto/config
+      - ./mqtt/mqtt-data:/mosquitto/data
+      - ./mqtt/mqtt-logs:/mosquitto/log
     command: mosquitto -c /mosquitto/config/mosquitto.conf
     restart: unless-stopped
