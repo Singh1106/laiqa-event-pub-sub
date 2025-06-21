@@ -30,6 +30,9 @@ class Application {
 
   async start(): Promise<void> {
     try {
+      // Setup signal handlers first
+      this.setupSignalHandlers();
+      
       console.log('🚀 Starting Headphone-Stereo System...');
       
       // Connect to message broker
@@ -40,9 +43,6 @@ class Application {
       
       // Start event generation
       await this.eventGenerator.start();
-      
-      // Setup graceful shutdown
-      this.setupGracefulShutdown();
       
       console.log('✅ System started successfully!');
       console.log('Press Ctrl+C or type "q" + Enter to exit gracefully');
@@ -63,8 +63,7 @@ class Application {
     const buffer = new Uint8Array(1024);
 
     while (!this.isShuttingDown) {
-      try {
-        const n = await Deno.stdin.read(buffer);
+      const n = await Deno.stdin.read(buffer);
         if (n === null) break;
         
         const input = decoder.decode(buffer.subarray(0, n)).trim().toLowerCase();
@@ -72,33 +71,24 @@ class Application {
           console.log('\n🛑 Shutdown requested...');
           break;
         }
-      } catch (error) {
-        // Handle Ctrl+C or other interruptions
-        if (error instanceof Deno.errors.Interrupted) {
-          break;
-        }
-        console.error('Input error:', error);
-      }
     }
     
     await this.shutdown();
   }
 
-  private setupGracefulShutdown(): void {
-    // Handle Ctrl+C
-    Deno.addSignalListener("SIGINT", () => {
-      if (!this.isShuttingDown) {
-        console.log('\n🛑 Received SIGINT, shutting down gracefully...');
-        this.isShuttingDown = true;
-      }
+  private setupSignalHandlers(): void {
+    // Handle Ctrl+C (SIGINT)
+    Deno.addSignalListener("SIGINT", async () => {
+      console.log('\n🛑 Received SIGINT (Ctrl+C), shutting down...');
+        await this.shutdown();
+      Deno.exit(0);
     });
 
-    // Handle SIGTERM
-    Deno.addSignalListener("SIGTERM", () => {
-      if (!this.isShuttingDown) {
-        console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
-        this.isShuttingDown = true;
-      }
+    // Handle SIGTERM (termination request)
+    Deno.addSignalListener("SIGTERM", async () => {
+      console.log('\n🛑 Received SIGTERM, shutting down...');
+      await this.shutdown();
+      Deno.exit(0);
     });
   }
 

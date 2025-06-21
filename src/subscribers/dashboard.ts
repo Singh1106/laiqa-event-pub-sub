@@ -101,7 +101,7 @@ export class StereoDashboard {
     
     console.log('🎵 STEREO DASHBOARD 🎵');
     console.log('═'.repeat(60));
-    console.log();
+    console.log('');
 
     // Header
     console.log('Device | Volume | Status      | Last Update');
