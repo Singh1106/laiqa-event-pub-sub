@@ -1,5 +1,5 @@
 // dashboard.ts - Terminal-based stereo dashboard
-import type { MessageBroker, HeadphoneEvent, StereoState } from "../interfaces.ts";
+import { type MessageBroker, type HeadphoneEvent, type StereoState, StereoStatus } from "../interfaces.ts";
 
 export class StereoDashboard {
   private stereos = new Map<number, StereoState>();
@@ -15,7 +15,7 @@ export class StereoDashboard {
       this.stereos.set(i, {
         deviceId: i,
         volume: 5,
-        status: 'Not Playing',
+        status: StereoStatus.Stopped,
         lastUpdate: Date.now()
       });
     }
@@ -78,13 +78,13 @@ export class StereoDashboard {
           stereo.volume = Math.max(stereo.volume - 1, 0);
           break;
         case 'PLAY':
-          stereo.status = 'Playing';
+          stereo.status = StereoStatus.PLAYING;
           break;
         case 'PAUSE':
-          stereo.status = 'Paused';
+          stereo.status = StereoStatus.PAUSED;
           break;
         case 'STOP':
-          stereo.status = 'Not Playing';
+          stereo.status = StereoStatus.Stopped;
           break;
       }
 

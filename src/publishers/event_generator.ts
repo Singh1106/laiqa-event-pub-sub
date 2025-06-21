@@ -1,5 +1,5 @@
 // deno-lint-ignore-file require-await
-import { HeadphoneEvent, MessageBroker } from "../interfaces.ts";
+import { HeadphoneEvent, MessageBroker, HeadphoneEventType } from "../interfaces.ts";
 
 export class HeadphoneEventGenerator {
   private intervalIds: number[] = [];
@@ -31,7 +31,7 @@ export class HeadphoneEventGenerator {
   }
 
   private startDeviceSimulation(deviceId: number): void {
-    const events: HeadphoneEvent['event'][] = ['VOLUMEUP', 'VOLUMEDOWN', 'PLAY', 'PAUSE', 'STOP'];
+    const events = Object.values(HeadphoneEventType);
     
     const generateEvent = async () => {
       if (!this.isRunning) return;
@@ -51,12 +51,12 @@ export class HeadphoneEventGenerator {
       // Schedule next event (3-10 seconds)
       const nextInterval = 3000 + Math.random() * 7000;
       const timeoutId = setTimeout(generateEvent, nextInterval);
-      this.intervalIds.push(timeoutId as unknown as number);
+      this.intervalIds.push(timeoutId);
     };
 
     // Start with initial delay
     const initialDelay = Math.random() * 2000;
     const timeoutId = setTimeout(generateEvent, initialDelay);
-    this.intervalIds.push(timeoutId as unknown as number);
+    this.intervalIds.push(timeoutId);
   }
 }
