@@ -6,8 +6,6 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
-    "@ymjacky/mqtt5": "jsr:@ymjacky/mqtt5@^0.0.21",
-    "await-to-js": "npm:await-to-js@^3.0.0",
     "mqtt": "npm:mqtt@^5.13.1"
   },
   "compilerOptions": {

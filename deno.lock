@@ -1,27 +1,8 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/assert@1": "1.0.13",
-    "jsr:@std/internal@^1.0.6": "1.0.8",
-    "jsr:@ymjacky/mqtt5@*": "0.0.21",
-    "jsr:@ymjacky/mqtt5@^0.0.21": "0.0.21",
-    "npm:await-to-js@3": "3.0.0",
     "npm:mqtt@*": "5.13.1",
     "npm:mqtt@^5.13.1": "5.13.1"
-  },
-  "jsr": {
-    "@std/assert@1.0.13": {
-      "integrity": "ae0d31e41919b12c656c742b22522c32fb26ed0cba32975cb0de2a273cb68b29",
-      "dependencies": [
-        "jsr:@std/internal"
-      ]
-    },
-    "@std/internal@1.0.8": {
-      "integrity": "fc66e846d8d38a47cffd274d80d2ca3f0de71040f855783724bb6b87f60891f5"
-    },
-    "@ymjacky/mqtt5@0.0.21": {
-      "integrity": "0a3394d6f141ce18557b69686c9fd1f93b207ee6d6866debc677ff661e75ec78"
-    }
   },
   "npm": {
     "@babel/runtime@7.27.6": {
@@ -44,9 +25,6 @@
       "dependencies": [
         "event-target-shim"
       ]
-    },
-    "await-to-js@3.0.0": {
-      "integrity": "sha512-zJAaP9zxTcvTHRlejau3ZOY4V7SRpiByf3/dxx2uyKxxor19tpmpV2QRsTKikckwhaPmr2dVpxxMr7jOCYVp5g=="
     },
     "base64-js@1.5.1": {
       "integrity": "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA=="
@@ -263,8 +241,6 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
-      "jsr:@ymjacky/mqtt5@^0.0.21",
-      "npm:await-to-js@3",
       "npm:mqtt@^5.13.1"
     ]
   }
