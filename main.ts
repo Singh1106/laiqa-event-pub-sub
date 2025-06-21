@@ -1,4 +1,4 @@
-import { MemoryBroker } from "./src/brokers/memory_blocker.ts";
+import { MemoryBroker } from "./src/brokers/memory_broker.ts";
 import { StereoDashboard } from "./src/subscribers/dashboard.ts";
 import { HeadphoneEventGenerator } from "./src/publishers/event_generator.ts";
 import { MessageBroker } from "./src/interfaces.ts";
