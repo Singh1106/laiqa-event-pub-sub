@@ -1,15 +1,15 @@
 export enum HeadphoneEventType {
-  VOLUMEUP = 'VOLUMEUP',
-  VOLUMEDOWN = 'VOLUMEDOWN',
-  PLAY = 'PLAY',
-  PAUSE = 'PAUSE',
-  STOP = 'STOP'
+  VOLUMEUP = "VOLUMEUP",
+  VOLUMEDOWN = "VOLUMEDOWN",
+  PLAY = "PLAY",
+  PAUSE = "PAUSE",
+  STOP = "STOP",
 }
 
 export enum StereoStatus {
-  PLAYING = 'Playing',
-  PAUSED = 'Paused',
-  Stopped = 'Stopped'
+  PLAYING = "Playing",
+  PAUSED = "Paused",
+  Stopped = "Stopped",
 }
 
 export interface MessageBroker {

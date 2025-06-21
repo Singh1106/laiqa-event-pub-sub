@@ -8,18 +8,18 @@ export class MemoryBroker implements MessageBroker {
 
   async connect(): Promise<void> {
     this.connected = true;
-    console.log('✓ Connected to in-memory broker');
+    console.log("✓ Connected to in-memory broker");
   }
 
   async disconnect(): Promise<void> {
     this.connected = false;
     this.subscriptions.clear();
-    console.log('✓ Disconnected from in-memory broker');
+    console.log("✓ Disconnected from in-memory broker");
   }
 
   async publish(topic: string, message: string): Promise<void> {
     if (!this.connected) {
-      throw new Error('Broker not connected');
+      throw new Error("Broker not connected");
     }
 
     const callback = this.subscriptions.get(topic);
@@ -29,9 +29,12 @@ export class MemoryBroker implements MessageBroker {
     }
   }
 
-  async subscribe(topic: string, callback: (message: string) => void): Promise<void> {
+  async subscribe(
+    topic: string,
+    callback: (message: string) => void,
+  ): Promise<void> {
     if (!this.connected) {
-      throw new Error('Broker not connected');
+      throw new Error("Broker not connected");
     }
 
     this.subscriptions.set(topic, callback);
@@ -39,7 +42,7 @@ export class MemoryBroker implements MessageBroker {
 
   async unsubscribe(topic: string): Promise<void> {
     if (!this.connected) {
-      throw new Error('Broker not connected');
+      throw new Error("Broker not connected");
     }
 
     this.subscriptions.delete(topic);

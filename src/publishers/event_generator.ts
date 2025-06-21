@@ -1,5 +1,9 @@
 // deno-lint-ignore-file require-await
-import { HeadphoneEvent, MessageBroker, HeadphoneEventType } from "../interfaces.ts";
+import {
+  HeadphoneEvent,
+  HeadphoneEventType,
+  MessageBroker,
+} from "../interfaces.ts";
 
 export class HeadphoneEventGenerator {
   private intervalIds: number[] = [];
@@ -7,7 +11,7 @@ export class HeadphoneEventGenerator {
 
   constructor(
     private broker: MessageBroker,
-    private deviceCount = (Deno.env.get('DEVICE_COUNT') || 10) as number
+    private deviceCount = (Deno.env.get("DEVICE_COUNT") || 10) as number,
   ) {}
 
   async start(): Promise<void> {
@@ -25,25 +29,28 @@ export class HeadphoneEventGenerator {
     if (!this.isRunning) return;
 
     this.isRunning = false;
-    this.intervalIds.forEach(id => clearInterval(id));
+    this.intervalIds.forEach((id) => clearInterval(id));
     this.intervalIds = [];
-    console.log('🛑 Stopped all headphone simulators');
+    console.log("🛑 Stopped all headphone simulators");
   }
 
   private startDeviceSimulation(deviceId: number): void {
     const events = Object.values(HeadphoneEventType);
-    
+
     const generateEvent = async () => {
       if (!this.isRunning) return;
 
       const event: HeadphoneEvent = {
         deviceId,
         event: events[Math.floor(Math.random() * events.length)],
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       try {
-        await this.broker.publish(`headphone/${deviceId}`, JSON.stringify(event));
+        await this.broker.publish(
+          `headphone/${deviceId}`,
+          JSON.stringify(event),
+        );
       } catch (error) {
         console.error(`Failed to publish event for device ${deviceId}:`, error);
       }

@@ -1,5 +1,11 @@
 // dashboard.ts - Terminal-based stereo dashboard
-import { type MessageBroker, type HeadphoneEvent, type StereoState, StereoStatus, HeadphoneEventType } from "../interfaces.ts";
+import {
+  type HeadphoneEvent,
+  HeadphoneEventType,
+  type MessageBroker,
+  type StereoState,
+  StereoStatus,
+} from "../interfaces.ts";
 
 export class StereoDashboard {
   private stereos = new Map<number, StereoState>();
@@ -8,7 +14,7 @@ export class StereoDashboard {
 
   constructor(
     private broker: MessageBroker,
-    private deviceCount = (Deno.env.get('DEVICE_COUNT') || 10) as number
+    private deviceCount = (Deno.env.get("DEVICE_COUNT") || 10) as number,
   ) {
     // Initialize stereo states
     for (let i = 1; i <= deviceCount; i++) {
@@ -16,7 +22,7 @@ export class StereoDashboard {
         deviceId: i,
         volume: 5,
         status: StereoStatus.Stopped,
-        lastUpdate: Date.now()
+        lastUpdate: Date.now(),
       });
     }
   }
@@ -25,7 +31,7 @@ export class StereoDashboard {
     if (this.isRunning) return;
 
     this.isRunning = true;
-    console.log('🎵 Starting stereo dashboard...');
+    console.log("🎵 Starting stereo dashboard...");
 
     // Subscribe to all device channels
     for (let deviceId = 1; deviceId <= this.deviceCount; deviceId++) {
@@ -59,14 +65,14 @@ export class StereoDashboard {
       this.updateInterval = null;
     }
 
-    console.log('🛑 Stopped stereo dashboard');
+    console.log("🛑 Stopped stereo dashboard");
   }
 
   private handleHeadphoneEvent(message: string): void {
     try {
       const event: HeadphoneEvent = JSON.parse(message);
       const stereo = this.stereos.get(event.deviceId);
-      
+
       if (!stereo) return;
 
       // Update stereo state based on event
@@ -91,35 +97,40 @@ export class StereoDashboard {
       stereo.lastUpdate = event.timestamp;
       this.stereos.set(event.deviceId, stereo);
     } catch (error) {
-      console.error('Failed to parse headphone event:', error);
+      console.error("Failed to parse headphone event:", error);
     }
   }
 
   private renderDashboard(): void {
     // Clear screen
     console.clear();
-    
-    console.log('🎵 STEREO DASHBOARD 🎵');
-    console.log('═'.repeat(60));
-    console.log('');
+
+    console.log("🎵 STEREO DASHBOARD 🎵");
+    console.log("═".repeat(60));
+    console.log("");
 
     // Header
-    console.log('Device | Volume | Status      | Last Update');
-    console.log('─'.repeat(60));
+    console.log("Device | Volume | Status      | Last Update");
+    console.log("─".repeat(60));
 
     // Stereo states
     for (let i = 1; i <= this.deviceCount; i++) {
       const stereo = this.stereos.get(i)!;
-      const timeSinceUpdate = Math.floor((Date.now() - stereo.lastUpdate) / 1000);
-      const volumeBar = '█'.repeat(stereo.volume) + '░'.repeat(10 - stereo.volume);
-      
+      const timeSinceUpdate = Math.floor(
+        (Date.now() - stereo.lastUpdate) / 1000,
+      );
+      const volumeBar = "█".repeat(stereo.volume) +
+        "░".repeat(10 - stereo.volume);
+
       console.log(
-        `  ${i.toString().padStart(2)}   | ${volumeBar} | ${stereo.status.padEnd(11)} | ${timeSinceUpdate}s ago`
+        `  ${i.toString().padStart(2)}   | ${volumeBar} | ${
+          stereo.status.padEnd(11)
+        } | ${timeSinceUpdate}s ago`,
       );
     }
 
     console.log();
-    console.log('─'.repeat(60));
+    console.log("─".repeat(60));
     console.log('Press Ctrl+C or "q" + Enter to exit');
   }
 }
