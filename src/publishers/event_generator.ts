@@ -7,7 +7,7 @@ export class HeadphoneEventGenerator {
 
   constructor(
     private broker: MessageBroker,
-    private deviceCount = 10
+    private deviceCount = (Deno.env.get('DEVICE_COUNT') || 10) as number
   ) {}
 
   async start(): Promise<void> {

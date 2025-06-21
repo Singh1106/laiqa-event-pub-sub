@@ -80,7 +80,7 @@ class Application {
     // Handle Ctrl+C (SIGINT)
     Deno.addSignalListener("SIGINT", async () => {
       console.log('\n🛑 Received SIGINT (Ctrl+C), shutting down...');
-        await this.shutdown();
+      await this.shutdown();
       Deno.exit(0);
     });
 

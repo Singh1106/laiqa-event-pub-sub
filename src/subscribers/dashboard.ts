@@ -1,5 +1,5 @@
 // dashboard.ts - Terminal-based stereo dashboard
-import { type MessageBroker, type HeadphoneEvent, type StereoState, StereoStatus } from "../interfaces.ts";
+import { type MessageBroker, type HeadphoneEvent, type StereoState, StereoStatus, HeadphoneEventType } from "../interfaces.ts";
 
 export class StereoDashboard {
   private stereos = new Map<number, StereoState>();
@@ -8,7 +8,7 @@ export class StereoDashboard {
 
   constructor(
     private broker: MessageBroker,
-    private deviceCount = 10
+    private deviceCount = (Deno.env.get('DEVICE_COUNT') || 10) as number
   ) {
     // Initialize stereo states
     for (let i = 1; i <= deviceCount; i++) {
@@ -71,19 +71,19 @@ export class StereoDashboard {
 
       // Update stereo state based on event
       switch (event.event) {
-        case 'VOLUMEUP':
+        case HeadphoneEventType.VOLUMEUP:
           stereo.volume = Math.min(stereo.volume + 1, 10);
           break;
-        case 'VOLUMEDOWN':
+        case HeadphoneEventType.VOLUMEDOWN:
           stereo.volume = Math.max(stereo.volume - 1, 0);
           break;
-        case 'PLAY':
+        case HeadphoneEventType.PLAY:
           stereo.status = StereoStatus.PLAYING;
           break;
-        case 'PAUSE':
+        case HeadphoneEventType.PAUSE:
           stereo.status = StereoStatus.PAUSED;
           break;
-        case 'STOP':
+        case HeadphoneEventType.STOP:
           stereo.status = StereoStatus.Stopped;
           break;
       }
