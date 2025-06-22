@@ -1,5 +1,6 @@
 import { MemoryBroker } from "./src/brokers/memory_broker.ts";
 import { MqttBroker } from "./src/brokers/mqtt_broker.ts";
+import { RedisBroker } from "./src/brokers/redis_broker.ts";
 import { StereoDashboard } from "./src/subscribers/dashboard.ts";
 import { HeadphoneEventGenerator } from "./src/publishers/event_generator.ts";
 import { MessageBroker } from "./src/interfaces.ts";
@@ -20,6 +21,9 @@ class Application {
         break;
       case "mqtt":
         this.broker = new MqttBroker();
+        break;
+      case "redis":
+        this.broker = new RedisBroker();
         break;
       default:
         this.broker = new MemoryBroker();

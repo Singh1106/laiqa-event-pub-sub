@@ -12,13 +12,16 @@ export class MqttBroker implements MessageBroker {
   constructor() {
     this.host = Deno.env.get("MQTT_HOST") || "localhost";
     this.port = parseInt(Deno.env.get("MQTT_PORT") || "1883");
-    this.clientId = Deno.env.get("MQTT_CLIENT_ID") || `deno_client_${Date.now()}`;
+    this.clientId = Deno.env.get("MQTT_CLIENT_ID") ||
+      `deno_client_${Date.now()}`;
   }
 
   async connect(): Promise<void> {
     try {
-      console.log(`🔄 Connecting to MQTT broker at mqtt://${this.host}:${this.port}...`);
-      
+      console.log(
+        `🔄 Connecting to MQTT broker at mqtt://${this.host}:${this.port}...`,
+      );
+
       this.client = mqtt.connect(`mqtt://${this.host}:${this.port}`, {
         clientId: this.clientId,
         clean: true,
@@ -26,13 +29,15 @@ export class MqttBroker implements MessageBroker {
       });
 
       return new Promise((resolve, reject) => {
-        this.client!.on('connect', () => {
-          console.log(`🔄 Connected successfully to MQTT broker at mqtt://${this.host}:${this.port}...`);
+        this.client!.on("connect", () => {
+          console.log(
+            `🔄 Connected successfully to MQTT broker at mqtt://${this.host}:${this.port}...`,
+          );
           this.connected = true;
           resolve();
         });
 
-        this.client!.on('error', (error) => {
+        this.client!.on("error", (error) => {
           reject(new Error(`Failed to connect to MQTT broker: ${error}`));
         });
       });
@@ -71,7 +76,10 @@ export class MqttBroker implements MessageBroker {
     });
   }
 
-  async subscribe(topic: string, callback: (message: string) => void): Promise<void> {
+  async subscribe(
+    topic: string,
+    callback: (message: string) => void,
+  ): Promise<void> {
     if (!this.connected || !this.client) {
       throw new Error("MQTT broker not connected");
     }
@@ -81,7 +89,7 @@ export class MqttBroker implements MessageBroker {
         if (error) {
           reject(error);
         } else {
-          this.client!.on('message', (receivedTopic, payload) => {
+          this.client!.on("message", (receivedTopic, payload) => {
             if (receivedTopic === topic) {
               callback(payload.toString());
             }

@@ -10,3 +10,13 @@ services:
       - ./mqtt/mqtt-logs:/mosquitto/log
     command: mosquitto -c /mosquitto/config/mosquitto.conf
     restart: unless-stopped
+
+  redis-broker:
+    image: redis:7-alpine
+    container_name: redis-broker
+    ports:
+      - "6379:6379" # Redis port
+    volumes:
+      - ./redis/data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped

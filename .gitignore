@@ -1,3 +1,4 @@
 *.env
 /mqtt/mqtt-data/mosquitto.db
 /mqtt/mqtt-logs/mosquitto.log
+/redis/data
