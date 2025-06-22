@@ -27,7 +27,7 @@ export class MqttBroker implements MessageBroker {
 
       return new Promise((resolve, reject) => {
         this.client!.on('connect', () => {
-          console.log(`🔄 Connected to MQTT broker at mqtt://${this.host}:${this.port} successfully.`);
+          console.log(`🔄 Connected successfully to MQTT broker at mqtt://${this.host}:${this.port}...`);
           this.connected = true;
           resolve();
         });
@@ -77,7 +77,7 @@ export class MqttBroker implements MessageBroker {
     }
 
     return new Promise((resolve, reject) => {
-      this.client!.subscribe(topic, { qos: 1 }, (error) => {
+      this.client!.subscribe(topic, { qos: 2 }, (error) => {
         if (error) {
           reject(error);
         } else {
