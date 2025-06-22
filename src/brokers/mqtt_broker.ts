@@ -1,7 +1,6 @@
 import * as mqtt from "npm:mqtt";
 import { to } from "npm:await-to-js";
 import { MessageBroker } from "../interfaces.ts";
-import { once } from "node:events";
 export class MqttBroker implements MessageBroker {
   private client: mqtt.MqttClient | null = null;
   private connected = false;
