@@ -103,7 +103,7 @@ export class StereoDashboard {
 
   private renderDashboard(): void {
     // Clear screen
-    console.clear();
+    // console.clear();
 
     console.log("🎵 STEREO DASHBOARD 🎵");
     console.log("═".repeat(60));

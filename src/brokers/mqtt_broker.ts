@@ -41,7 +41,6 @@ export class MqttBroker implements MessageBroker {
         });
       }),
     );
-
     if (err) throw new Error(`Failed to connect to MQTT broker: ${err}`);
   }
 
