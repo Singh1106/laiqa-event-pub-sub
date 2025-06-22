@@ -5,7 +5,8 @@ import { MqttBroker } from "../src/brokers/mqtt_broker.ts";
 
 export interface PerformanceMetrics {
   brokerType: string;
-  throughput: number; // messages/sec
+  parallelThroughput: number; // messages/sec
+  sequentialThroughput: number; // messages/sec
   avgLatency: number; // ms
   p95Latency: number; // ms
   maxLatency: number; // ms
@@ -32,21 +33,28 @@ export class BrokerPerformanceTester {
     console.timeEnd(`[PERF] ${brokerType} connection time`);
     console.log(`[PERF] ${brokerType} connection took ${connectionTime.toFixed(2)}ms`);
 
-    // 2. Throughput Test
-    console.log(`[PERF] Starting throughput test for ${brokerType}`);
-    console.time(`[PERF] ${brokerType} throughput test`);
-    const throughputResult = await this.throughputTest(broker);
-    console.timeEnd(`[PERF] ${brokerType} throughput test`);
-    console.log(`[PERF] ${brokerType} throughput: ${throughputResult.messagesPerSecond.toFixed(0)} msg/s`);
+    // 2. Parallel Throughput Test
+    console.log(`[PERF] Starting parallel throughput test for ${brokerType}`);
+    console.time(`[PERF] ${brokerType} parallel throughput test`);
+    const parallelThroughputResult = await this.parallelThroughputTest(broker);
+    console.timeEnd(`[PERF] ${brokerType} parallel throughput test`);
+    console.log(`[PERF] ${brokerType} parallel throughput: ${parallelThroughputResult.messagesPerSecond.toFixed(0)} msg/s`);
 
-    // 3. Latency Test
+    // 3. Sequential Throughput Test
+    console.log(`[PERF] Starting sequential throughput test for ${brokerType}`);
+    console.time(`[PERF] ${brokerType} sequential throughput test`);
+    const sequentialThroughputResult = await this.sequentialThroughputTest(broker);
+    console.timeEnd(`[PERF] ${brokerType} sequential throughput test`);
+    console.log(`[PERF] ${brokerType} sequential throughput: ${sequentialThroughputResult.messagesPerSecond.toFixed(0)} msg/s`);
+
+    // 4. Latency Test
     console.log(`[PERF] Starting latency test for ${brokerType}`);
     console.time(`[PERF] ${brokerType} latency test`);
     const latencyResult = await this.latencyTest(broker);
     console.timeEnd(`[PERF] ${brokerType} latency test`);
     console.log(`[PERF] ${brokerType} avg latency: ${latencyResult.avgLatency.toFixed(2)}ms`);
 
-    // 4. Error Rate Test
+    // 5. Error Rate Test
     console.log(`[PERF] Starting error rate test for ${brokerType}`);
     console.time(`[PERF] ${brokerType} error rate test`);
     const errorResult = await this.errorRateTest(broker);
@@ -62,7 +70,8 @@ export class BrokerPerformanceTester {
 
     return {
       brokerType,
-      throughput: throughputResult.messagesPerSecond,
+      parallelThroughput: parallelThroughputResult.messagesPerSecond,
+      sequentialThroughput: sequentialThroughputResult.messagesPerSecond,
       avgLatency: latencyResult.avgLatency,
       p95Latency: latencyResult.p95Latency,
       maxLatency: latencyResult.maxLatency,
@@ -71,30 +80,30 @@ export class BrokerPerformanceTester {
     };
   }
 
-  private async throughputTest(
+  private async parallelThroughputTest(
     broker: MessageBroker,
   ): Promise<{ messagesPerSecond: number }> {
-    console.log(`[PERF] Starting throughput test setup`);
+    console.log(`[PERF] Starting parallel throughput test setup`);
     const messageCount = 10000;
     let receivedCount = 0;
     
-    console.log(`[PERF] Setting up subscription for throughput test`);
-    console.time(`[PERF] Throughput subscription setup`);
-    await broker.subscribe("throughput-test", () => {
+    console.log(`[PERF] Setting up subscription for parallel throughput test`);
+    console.time(`[PERF] Parallel throughput subscription setup`);
+    await broker.subscribe("parallel-throughput-test", () => {
       receivedCount++;
       if (receivedCount % 1000 === 0) {
-        console.log(`[PERF] Received ${receivedCount}/${messageCount} throughput messages`);
+        console.log(`[PERF] Received ${receivedCount}/${messageCount} parallel throughput messages`);
       }
     });
-    console.timeEnd(`[PERF] Throughput subscription setup`);
+    console.timeEnd(`[PERF] Parallel throughput subscription setup`);
 
-    console.log(`[PERF] Starting to publish ${messageCount} messages`);
+    console.log(`[PERF] Starting to publish ${messageCount} messages in parallel`);
     const start = performance.now();
-    console.time(`[PERF] Publishing ${messageCount} messages`);
+    console.time(`[PERF] Publishing ${messageCount} messages in parallel`);
 
     const publishPromises = [];
     for (let i = 0; i < messageCount; i++) {
-      publishPromises.push(broker.publish("throughput-test", `message-${i}`));
+      publishPromises.push(broker.publish("parallel-throughput-test", `message-${i}`));
       if (i % 1000 === 0) {
         console.log(`[PERF] Queued ${i}/${messageCount} publish operations`);
       }
@@ -102,7 +111,7 @@ export class BrokerPerformanceTester {
 
     console.log(`[PERF] Waiting for all publish operations to complete`);
     await Promise.all(publishPromises);
-    console.timeEnd(`[PERF] Publishing ${messageCount} messages`);
+    console.timeEnd(`[PERF] Publishing ${messageCount} messages in parallel`);
 
     console.log(`[PERF] Waiting for message delivery completion`);
     console.time(`[PERF] Message delivery wait`);
@@ -117,7 +126,56 @@ export class BrokerPerformanceTester {
     console.timeEnd(`[PERF] Message delivery wait`);
 
     const duration = performance.now() - start;
-    console.log(`[PERF] Throughput test completed in ${duration.toFixed(2)}ms`);
+    console.log(`[PERF] Parallel throughput test completed in ${duration.toFixed(2)}ms`);
+
+    return {
+      messagesPerSecond: messageCount / (duration / 1000),
+    };
+  }
+
+  private async sequentialThroughputTest(
+    broker: MessageBroker,
+  ): Promise<{ messagesPerSecond: number }> {
+    console.log(`[PERF] Starting sequential throughput test setup`);
+    const messageCount = 10000;
+    let receivedCount = 0;
+    
+    console.log(`[PERF] Setting up subscription for sequential throughput test`);
+    console.time(`[PERF] Sequential throughput subscription setup`);
+    await broker.subscribe("sequential-throughput-test", () => {
+      receivedCount++;
+      if (receivedCount % 1000 === 0) {
+        console.log(`[PERF] Received ${receivedCount}/${messageCount} sequential throughput messages`);
+      }
+    });
+    console.timeEnd(`[PERF] Sequential throughput subscription setup`);
+
+    console.log(`[PERF] Starting to publish ${messageCount} messages sequentially`);
+    const start = performance.now();
+    console.time(`[PERF] Publishing ${messageCount} messages sequentially`);
+
+    for (let i = 0; i < messageCount; i++) {
+      await broker.publish("sequential-throughput-test", `message-${i}`);
+      if (i % 1000 === 0) {
+        console.log(`[PERF] Published ${i}/${messageCount} sequential messages`);
+      }
+    }
+    console.timeEnd(`[PERF] Publishing ${messageCount} messages sequentially`);
+
+    console.log(`[PERF] Waiting for message delivery completion`);
+    console.time(`[PERF] Message delivery wait`);
+    let waitCount = 0;
+    while (receivedCount < messageCount) {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      waitCount++;
+      if (waitCount % 100 === 0) {
+        console.log(`[PERF] Still waiting... received ${receivedCount}/${messageCount} (waited ${waitCount}ms)`);
+      }
+    }
+    console.timeEnd(`[PERF] Message delivery wait`);
+
+    const duration = performance.now() - start;
+    console.log(`[PERF] Sequential throughput test completed in ${duration.toFixed(2)}ms`);
 
     return {
       messagesPerSecond: messageCount / (duration / 1000),
@@ -232,7 +290,8 @@ export class BrokerPerformanceTester {
 
     const headers = [
       "Broker",
-      "Throughput (msg/s)",
+      "Parallel T/put (msg/s)",
+      "Sequential T/put (msg/s)",
       "Avg Latency (ms)",
       "P95 Latency (ms)",
       "Connection (ms)",
@@ -244,7 +303,8 @@ export class BrokerPerformanceTester {
     this.results.forEach((result) => {
       const row = [
         result.brokerType.padEnd(10),
-        result.throughput.toFixed(0).padStart(10),
+        result.parallelThroughput.toFixed(0).padStart(10),
+        result.sequentialThroughput.toFixed(0).padStart(10),
         result.avgLatency.toFixed(2).padStart(10),
         result.p95Latency.toFixed(2).padStart(10),
         result.connectionTime.toFixed(2).padStart(10),
@@ -256,12 +316,21 @@ export class BrokerPerformanceTester {
     // Performance insights
     console.log("\n🔍 PERFORMANCE INSIGHTS:");
 
-    const fastest = this.results.reduce((prev, current) =>
-      prev.throughput > current.throughput ? prev : current
+    const fastestParallel = this.results.reduce((prev, current) =>
+      prev.parallelThroughput > current.parallelThroughput ? prev : current
     );
     console.log(
-      `🚀 Fastest Throughput: ${fastest.brokerType} (${
-        fastest.throughput.toFixed(0)
+      `🚀 Fastest Parallel Throughput: ${fastestParallel.brokerType} (${
+        fastestParallel.parallelThroughput.toFixed(0)
+      } msg/s)`,
+    );
+
+    const fastestSequential = this.results.reduce((prev, current) =>
+      prev.sequentialThroughput > current.sequentialThroughput ? prev : current
+    );
+    console.log(
+      `🔄 Fastest Sequential Throughput: ${fastestSequential.brokerType} (${
+        fastestSequential.sequentialThroughput.toFixed(0)
       } msg/s)`,
     );
 
