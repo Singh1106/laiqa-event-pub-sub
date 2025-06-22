@@ -1,59 +1,71 @@
 import { MessageBroker } from "../interfaces.ts";
 import { createClient } from "npm:redis";
+import { to } from "npm:await-to-js";
 
 export class RedisBroker implements MessageBroker {
-  private client: any = null;
+  private publisher: any = null;
+  private subscriber: any = null;
+
   private connected = false;
   private url: string;
 
-  constructor(host = "localhost", port = 6379) {
+  constructor() {
+    const host = Deno.env.get("REDIS_HOST") || "localhost";
+    const port = parseInt(Deno.env.get("REDIS_PORT") || "6379");
     this.url = `redis://${host}:${port}`;
   }
 
   async connect(): Promise<void> {
-    try {
-      this.client = createClient({ url: this.url });
-      await this.client.connect();
+    this.publisher = createClient({ url: this.url });
+    this.subscriber = createClient({ url: this.url });
 
-      this.connected = true;
-      console.log(`✓ Connected to Redis broker at ${this.url}`);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to connect to Redis: ${error.message}`);
-      } else {
-        throw new Error(`Failed to connect to Redis: ${String(error)}`);
-      }
+    const [errPublisher] = await to(this.publisher.connect());
+    const [errSubscriber] = await to(this.subscriber.connect());
+
+    if (errPublisher) {
+      throw new Error(
+        `Failed to initialize publisher: ${String(errPublisher)}`,
+      );
     }
+    if (errSubscriber) {
+      throw new Error(
+        `Failed to initialize subscriber: ${String(errSubscriber)}`,
+      );
+    }
+
+    this.connected = true;
+    console.log(`✓ Connected to Redis broker at ${this.url}`);
   }
 
   async disconnect(): Promise<void> {
     this.connected = false;
 
-    try {
-      if (this.client) {
-        await this.client.quit();
-        this.client = null;
+    if (this.publisher) {
+      const [errPub] = await to(this.publisher.quit());
+      if (errPub) {
+        console.error("Error disconnecting publisher from Redis:", errPub);
       }
-
-      console.log("✓ Disconnected from Redis broker");
-    } catch (error) {
-      console.error("Error disconnecting from Redis:", error);
+      this.publisher = null;
     }
+    if (this.subscriber) {
+      const [errSub] = await to(this.subscriber.quit());
+      if (errSub) {
+        console.error("Error disconnecting subscriber from Redis:", errSub);
+      }
+      this.subscriber = null;
+    }
+
+    console.log("✓ Disconnected from Redis broker");
   }
 
   async publish(topic: string, message: string): Promise<void> {
-    if (!this.connected || !this.client) {
+    if (!this.connected || !this.publisher) {
       throw new Error("Redis broker not connected");
     }
 
-    try {
-      await this.client.publish(topic, message);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to connect to Redis: ${error.message}`);
-      } else {
-        throw new Error(`Failed to connect to Redis: ${String(error)}`);
-      }
+    const [err] = await to(this.publisher.publish(topic, message));
+    if (err) {
+      throw new Error(`Failed to publish to Redis: ${String(err)}`);
     }
   }
 
@@ -61,38 +73,31 @@ export class RedisBroker implements MessageBroker {
     topic: string,
     callback: (message: string) => void,
   ): Promise<void> {
-    if (!this.connected || !this.client) {
+    if (!this.connected || !this.subscriber) {
       throw new Error("Redis broker not connected");
     }
 
-    try {
-      await this.client.subscribe(topic, (message: string, channel: string) => {
+    const [err] = await to(
+      this.subscriber.subscribe(topic, (message: string, channel: string) => {
         if (channel === topic) {
           callback(message);
         }
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to connect to Redis: ${error.message}`);
-      } else {
-        throw new Error(`Failed to connect to Redis: ${String(error)}`);
-      }
+      }),
+    );
+
+    if (err) {
+      throw new Error(`Failed to subscribe to Redis: ${String(err)}`);
     }
   }
 
   async unsubscribe(topic: string): Promise<void> {
-    if (!this.connected || !this.client) {
+    if (!this.connected || !this.subscriber) {
       throw new Error("Redis broker not connected");
     }
 
-    try {
-      await this.client.unsubscribe(topic);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to connect to Redis: ${error.message}`);
-      } else {
-        throw new Error(`Failed to connect to Redis: ${String(error)}`);
-      }
+    const [err] = await to(this.subscriber.unsubscribe(topic));
+    if (err) {
+      throw new Error(`Failed to unsubscribe from Redis: ${String(err)}`);
     }
   }
 }

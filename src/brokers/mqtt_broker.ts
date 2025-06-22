@@ -1,7 +1,7 @@
-// deno-lint-ignore-file require-await
 import * as mqtt from "npm:mqtt";
+import { to } from "npm:await-to-js";
 import { MessageBroker } from "../interfaces.ts";
-
+import { once } from "node:events";
 export class MqttBroker implements MessageBroker {
   private client: mqtt.MqttClient | null = null;
   private connected = false;
@@ -17,18 +17,18 @@ export class MqttBroker implements MessageBroker {
   }
 
   async connect(): Promise<void> {
-    try {
-      console.log(
-        `🔄 Connecting to MQTT broker at mqtt://${this.host}:${this.port}...`,
-      );
+    console.log(
+      `🔄 Connecting to MQTT broker at mqtt://${this.host}:${this.port}...`,
+    );
 
-      this.client = mqtt.connect(`mqtt://${this.host}:${this.port}`, {
-        clientId: this.clientId,
-        clean: true,
-        keepalive: 60,
-      });
+    this.client = mqtt.connect(`mqtt://${this.host}:${this.port}`, {
+      clientId: this.clientId,
+      clean: true,
+      keepalive: 60,
+    });
 
-      return new Promise((resolve, reject) => {
+    const [err] = await to(
+      new Promise<void>((resolve, reject) => {
         this.client!.on("connect", () => {
           console.log(
             `🔄 Connected successfully to MQTT broker at mqtt://${this.host}:${this.port}...`,
@@ -40,22 +40,25 @@ export class MqttBroker implements MessageBroker {
         this.client!.on("error", (error) => {
           reject(new Error(`Failed to connect to MQTT broker: ${error}`));
         });
-      });
-    } catch (error) {
-      throw new Error(`Failed to connect to MQTT broker: ${error}`);
-    }
+      }),
+    );
+
+    if (err) throw new Error(`Failed to connect to MQTT broker: ${err}`);
   }
 
   async disconnect(): Promise<void> {
     if (this.client) {
-      return new Promise((resolve) => {
-        this.client!.end(false, {}, () => {
-          this.client = null;
-          this.connected = false;
-          console.log("✓ Disconnected from MQTT broker");
-          resolve();
-        });
-      });
+      await to(
+        new Promise<void>((resolve) => {
+          this.client!.end(false, {}, () => {
+            this.client = null;
+            this.connected = false;
+            console.log("✓ Disconnected from MQTT broker");
+            resolve();
+          });
+        }),
+      );
+      return;
     }
     this.connected = false;
   }
@@ -65,15 +68,19 @@ export class MqttBroker implements MessageBroker {
       throw new Error("MQTT broker not connected");
     }
 
-    return new Promise((resolve, reject) => {
-      this.client!.publish(topic, message, { qos: 0 }, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
+    const [err] = await to(
+      new Promise<void>((resolve, reject) => {
+        this.client!.publish(topic, message, { qos: 2 }, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      }),
+    );
+
+    if (err) throw err;
   }
 
   async subscribe(
@@ -84,20 +91,24 @@ export class MqttBroker implements MessageBroker {
       throw new Error("MQTT broker not connected");
     }
 
-    return new Promise((resolve, reject) => {
-      this.client!.subscribe(topic, { qos: 2 }, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          this.client!.on("message", (receivedTopic, payload) => {
-            if (receivedTopic === topic) {
-              callback(payload.toString());
-            }
-          });
-          resolve();
-        }
-      });
-    });
+    const [err] = await to(
+      new Promise<void>((resolve, reject) => {
+        this.client!.subscribe(topic, { qos: 2 }, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            this.client!.on("message", (receivedTopic, payload) => {
+              if (receivedTopic === topic) {
+                callback(payload.toString());
+              }
+            });
+            resolve();
+          }
+        });
+      }),
+    );
+
+    if (err) throw err;
   }
 
   async unsubscribe(topic: string): Promise<void> {
@@ -105,14 +116,18 @@ export class MqttBroker implements MessageBroker {
       throw new Error("MQTT broker not connected");
     }
 
-    return new Promise((resolve, reject) => {
-      this.client!.unsubscribe(topic, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
+    const [err] = await to(
+      new Promise<void>((resolve, reject) => {
+        this.client!.unsubscribe(topic, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      }),
+    );
+
+    if (err) throw err;
   }
 }
